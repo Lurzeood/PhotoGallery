@@ -1,12 +1,16 @@
 package com.example.administrator.photogallery;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +31,8 @@ public class PhotoGalleryFragment extends Fragment {
 
     private List<GalleryItem> mItems = new ArrayList<>();
 
+    private ThumbnailDownloader<PhotoHolder> mThunbnailDDownloader;
+
     public static PhotoGalleryFragment newInstance() {
 
         Bundle args = new Bundle();
@@ -41,6 +47,33 @@ public class PhotoGalleryFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         new FetchItemsTask().execute();
+
+        Handler responseHandler = new Handler();
+        mThunbnailDDownloader = new ThumbnailDownloader<>(responseHandler);
+        mThunbnailDDownloader.setmThumbnailDownloadlistener(new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
+            @Override
+            public void onThumbnailDounloaded(PhotoHolder photoHolder, Bitmap bitmap) {
+                Drawable drawable = new BitmapDrawable(getResources(),bitmap);
+                photoHolder.bindDrawable(drawable);
+            }
+
+        });
+        mThunbnailDDownloader.start();
+        mThunbnailDDownloader.getLooper();
+        Log.i(TAG,"Background thread started");
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mThunbnailDDownloader.clearQueue();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mThunbnailDDownloader.quit();
+        Log.i(TAG,"Background thread destroyed");
     }
 
     @Nullable
@@ -104,6 +137,7 @@ public class PhotoGalleryFragment extends Fragment {
             GalleryItem galleryItem = mGalleryItems.get(position);
             Drawable placeholder = getResources().getDrawable(R.drawable.bill_up_close);
             holder.bindDrawable(placeholder);
+            mThunbnailDDownloader.queueThumbnail(holder,galleryItem.getmUrl());
         }
 
         @Override
