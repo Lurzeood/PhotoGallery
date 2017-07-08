@@ -1,5 +1,7 @@
 package com.example.administrator.photogallery;
 
+import android.net.Uri;
+
 /**
  * Created by Lurzeood on 2017/5/28 0028.
  */
@@ -11,6 +13,8 @@ public class GalleryItem {
     private String mId;
 
     private String mUrl;
+
+    private String mOwner;
 
     @Override
     public String toString() {
@@ -40,4 +44,21 @@ public class GalleryItem {
     public void setmUrl(String mUrl) {
         this.mUrl = mUrl;
     }
+
+    public String getOwner(){
+        return mOwner;
+    }
+
+    public void setOwner(String owner){
+        mOwner = owner;
+    }
+
+    public Uri getPhotoPageUri(){
+        return Uri.parse("http://www.flickr.com/photos/")
+                .buildUpon()
+                .appendPath(mOwner)
+                .appendPath(mId)
+                .build();
+    }
+
 }
